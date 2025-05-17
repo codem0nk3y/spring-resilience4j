@@ -2,7 +2,7 @@ server:
   port: 8080
 
 downstream:
-  base-url: http://localhost:8081/api/users
+  base-url: http://localhost:8081
 
 springdoc:
   api-docs:
@@ -14,14 +14,11 @@ resilience4j:
   circuitbreaker:
     instances:
       userService:
-        registerHealthIndicator: true
         slidingWindowSize: 10
         minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 5s
         failureRateThreshold: 50
-        eventConsumerBufferSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
   ratelimiter:
     instances:
       userService:
@@ -36,4 +33,7 @@ management:
         include: health,metrics,circuitbreakers,circuitbreakerevents,ratelimiters,ratelimiterevents
   endpoint:
     health:
-      show-details: always 
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true 
