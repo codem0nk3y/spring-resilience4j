@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: downstream-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: downstream-service
+  template:
+    metadata:
+      labels:
+        app: downstream-service
+    spec:
+      containers:
+      - name: downstream-service
+        image: ${REGISTRY}/${IMAGE_NAME}/downstream-service:${TAG}
+        ports:
+        - containerPort: 8081
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-resilience-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spring-resilience-demo
+  template:
+    metadata:
+      labels:
+        app: spring-resilience-demo
+    spec:
+      containers:
+      - name: spring-resilience-demo
+        image: ${REGISTRY}/${IMAGE_NAME}/spring-resilience-demo:${TAG}
+        ports:
+        - containerPort: 8080
+        env:
+        - name: API_BASE_URL
+          value: "http://downstream-service:8081"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 5 

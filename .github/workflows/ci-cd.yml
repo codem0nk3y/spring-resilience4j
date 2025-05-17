@@ -9,6 +9,9 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  GKE_PROJECT: your-gcp-project-id
+  GKE_CLUSTER: your-gke-cluster
+  GKE_ZONE: your-gke-zone
 
 jobs:
   security-scan:
@@ -96,7 +99,37 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Deploy to production
+      - uses: actions/checkout@v4
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GKE_PROJECT }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker
+
+      - name: Get GKE credentials
         run: |
-          echo "Deploy to production environment"
-          # Add your deployment steps here 
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
+            --zone ${{ env.GKE_ZONE }} \
+            --project ${{ env.GKE_PROJECT }}
+
+      - name: Deploy to GKE
+        run: |
+          # Set environment variables for kustomize
+          export REGISTRY=${{ env.REGISTRY }}
+          export IMAGE_NAME=${{ env.IMAGE_NAME }}
+          export TAG=${{ github.sha }}
+          
+          # Deploy using kustomize
+          cd k8s/base
+          kustomize edit set image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/downstream-service:${{ github.sha }}
+          kustomize edit set image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/spring-resilience-demo:${{ github.sha }}
+          kustomize build . | kubectl apply -f -
+          
+          # Wait for deployments to be ready
+          kubectl rollout status deployment/downstream-service
+          kubectl rollout status deployment/spring-resilience-demo 

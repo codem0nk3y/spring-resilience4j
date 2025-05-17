@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spring-resilience-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "spring-resilience-ip"
+    networking.gke.io/managed-certificates: "spring-resilience-cert"
+spec:
+  rules:
+  - host: api.yourdomain.com  # Replace with your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: spring-resilience-demo
+            port:
+              number: 8080 
