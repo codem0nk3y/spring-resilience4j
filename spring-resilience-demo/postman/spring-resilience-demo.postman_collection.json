@@ -1,0 +1,147 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Spring Resilience Demo",
+		"description": "Collection for testing Spring Resilience patterns",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get User by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/users/1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"users",
+						"1"
+					]
+				},
+				"description": "Get user by ID with circuit breaker and rate limiter"
+			},
+			"response": [
+				{
+					"name": "Successful Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"1"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": {
+						"id": 1,
+						"name": "John Doe",
+						"email": "john.doe@example.com"
+					}
+				},
+				{
+					"name": "Fallback Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"1"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": {
+						"id": 1,
+						"name": "Fallback User",
+						"email": "fallback@example.com"
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Status code is 200\", function () {",
+					"    pm.response.to.have.status(200);",
+					"});",
+					"",
+					"pm.test(\"Response has correct structure\", function () {",
+					"    var jsonData = pm.response.json();",
+					"    pm.expect(jsonData).to.have.property('id');",
+					"    pm.expect(jsonData).to.have.property('name');",
+					"    pm.expect(jsonData).to.have.property('email');",
+					"});",
+					"",
+					"// Test for either successful or fallback response",
+					"pm.test(\"Response matches expected user data\", function () {",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.name === \"Fallback User\") {",
+					"        pm.expect(jsonData.id).to.equal(1);",
+					"        pm.expect(jsonData.name).to.equal(\"Fallback User\");",
+					"        pm.expect(jsonData.email).to.equal(\"fallback@example.com\");",
+					"    } else {",
+					"        pm.expect(jsonData.id).to.equal(1);",
+					"        pm.expect(jsonData.name).to.equal(\"John Doe\");",
+					"        pm.expect(jsonData.email).to.equal(\"john.doe@example.com\");",
+					"    }",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+} 
