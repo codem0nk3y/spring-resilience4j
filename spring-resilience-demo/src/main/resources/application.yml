@@ -22,9 +22,12 @@ resilience4j:
   ratelimiter:
     instances:
       userService:
-        limitForPeriod: 10
-        limitRefreshPeriod: 1s
-        timeoutDuration: 0s
+        limitForPeriod: 100
+        limitRefreshPeriod: 10s
+        timeoutDuration: 500ms
+        registerHealthIndicator: true
+        allowHealthIndicatorToFail: false
+        eventConsumerBufferSize: 100
 
 management:
   endpoints:
@@ -36,4 +39,6 @@ management:
       show-details: always
   health:
     circuitbreakers:
+      enabled: true
+    ratelimiters:
       enabled: true 
